@@ -1,7 +1,6 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
-import { CSS2DRenderer, CSS2DObject } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/renderers/CSS2DRenderer.js";
-
+import { CSS2DRenderer, CSS2DObject } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/renderers/CSS2DRenderer.js';
 
 let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 2000);
@@ -9,48 +8,9 @@ camera.position.set(0.5, 0.5, 1).setLength(14);
 let renderer = new THREE.WebGLRenderer({
   antialias: true
 });
-
-
-//   // Initialize Firebase
-// const firebaseConfig = {
-//   apiKey: 'YOUR_API_KEY',
-//   authDomain: 'YOUR_AUTH_DOMAIN',
-//   projectId: 'YOUR_PROJECT_ID',
-//   storageBucket: 'YOUR_STORAGE_BUCKET',
-//   messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-//   appId: 'YOUR_APP_ID'
-// };
-
-// firebase.initializeApp(firebaseConfig);
-
-//   const db = firebase.firestore();
-
-//   // Initialize Firebase
-// const app = initializeApp(firebaseConfig);
-// const analytics = getAnalytics(app);
-
-//   // Function to add custom data to Firestore
-  ;
-//   };
-  
-  
 renderer.setSize(innerWidth, innerHeight);
 renderer.setClearColor(0xffa1a1a1);
 document.body.appendChild(renderer.domElement);
-
-var addPointElement =  document.getElementById("addPoint");
-addPointElement.addEventListener("click", onClickFunction);
-
-
-function onClickFunction() {
-  console.log(firebase);
-
-  // Function code here
-  console.log("Button clicked!");
-  alert("click");
-}
-
-
 
 
 let labelRenderer = new CSS2DRenderer();
@@ -75,7 +35,7 @@ let globalUniforms = {
 
 // <GLOBE>
 // https://web.archive.org/web/20120107030109/http://cgafaq.info/wiki/Evenly_distributed_points_on_sphere#Spirals
-let counter = 500000;
+let counter = 5000000;
 let rad = 5;
 let sph = new THREE.Spherical();
 
@@ -107,14 +67,12 @@ for (let i = 0; i < counter; i++) {
   sph.setFromVector3(p);
   uvs.push((sph.theta + Math.PI) / (Math.PI * 2), 1.0 - sph.phi / Math.PI);
 }
-isChange = true;
 
 let g = new THREE.BufferGeometry().setFromPoints(pts);
-
 g.setAttribute("color", new THREE.Float32BufferAttribute(clr, 3));
 g.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
 let m = new THREE.PointsMaterial({
-  size: 0.001,
+  size: 0.1,
   vertexColors: false,  
   color: new THREE.Color(0,0,0),
   onBeforeCompile: (shader) => {
@@ -160,13 +118,13 @@ let m = new THREE.PointsMaterial({
 });
 let globe = new THREE.Points(g, m);
 scene.add(globe);
+
   // <ICOSAHEDRON>
   let icshdrn = new THREE.Mesh(new THREE.IcosahedronGeometry(rad, 1), new THREE.MeshBasicMaterial({color: 0x647f7f, wireframe: true}));
   globe.add(icshdrn);
   // </ICOSAHEDRON>
 // </GLOBE>
 
-// <Markers>
 const db = firebase.firestore();
 
 var list = await db.collection("users")
@@ -204,8 +162,8 @@ let mMarker = new THREE.MeshBasicMaterial({
       val = max(val, 1. - step(0.01, lenUv)); // central circle
       val = max(val, step(0.05, lenUv) - step(0.05, lenUv)); // outer circle
       
-      float tShift = fract(time * 0.1 + vPhase);
-      val = max(val, step(0.1 + (tShift * 0.05), lenUv) - step(0.08 + (tShift * 0.5), lenUv)); // ripple
+      float tShift = fract(time * 0.5 + vPhase);
+      val = max(val, step(0.1 + (tShift * 0.05), lenUv) - step(0.08 + (tShift * 0.2), lenUv)); // ripple
       
       if (val < 0.1) discard;
       
