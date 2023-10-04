@@ -52,40 +52,6 @@ function onClickFunction() {
 
 
 
-function getActiveUsers(){
-
-  let activeUsers = 1;
-
-  const db = firebase.firestore();
-
-// Reference to the 'users' collection
-const customDataCollection = db.collection('users');
-
-// Calculate the start and end timestamps for your 1-minute range
-const now = new Date();
-const oneMinuteAgo = new Date(now.getTime() - 60 * 1000); // Subtract 60 seconds (1 minute) in milliseconds
-
-// Register a listener for real-time updates within the specified time range
-const unsubscribe = customDataCollection
-  .where('timestamp', '>=', oneMinuteAgo)
-  .where('timestamp', '<=', now)
-  .onSnapshot((querySnapshot) => {  
-    activeUsers = querySnapshot.length;
-    // querySnapshot.forEach((doc) => {
-    //   // Access data for each document in the collection
-    //   const data = doc.data();
-    //   console.log(data); // Log the document data
-
-    //   // You can perform your logic here with the real-time data within the 1-minute range
-    // });
-  });
-
-
-  return activeUsers;
-}
-
-
-
 
 let labelRenderer = new CSS2DRenderer();
 labelRenderer.setSize( window.innerWidth, window.innerHeight );
@@ -141,7 +107,7 @@ for (let i = 0; i < counter; i++) {
   sph.setFromVector3(p);
   uvs.push((sph.theta + Math.PI) / (Math.PI * 2), 1.0 - sph.phi / Math.PI);
 }
-// isChange = true;
+isChange = true;
 
 let g = new THREE.BufferGeometry().setFromPoints(pts);
 
@@ -201,9 +167,13 @@ scene.add(globe);
 // </GLOBE>
 
 // <Markers>
-let activeUsers = getActiveUsers();
-  console.log(activeUsers,"my users");
-const markerCount = activeUsers;
+const db = firebase.firestore();
+
+var list = await db.collection("users")
+  .get();
+
+  console.log(list.docs.length);
+const markerCount = list.docs.length;
 let markerInfo = []; // information on markers
 let gMarker = new THREE.PlaneGeometry();
 let mMarker = new THREE.MeshBasicMaterial({
