@@ -1,11 +1,12 @@
-import * as THREE from "https://unpkg.com/three@0.149.0/build/three.module.js";
+import * as THREE from "./3lib.js";
 import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
-import { CSS2DRenderer, CSS2DObject } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/renderers/CSS2DRenderer.js';
+import { CSS2DRenderer } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/renderers/CSS2DRenderer.js';
 
 let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 2000);
-camera.position.set(0.9, 0.5, 1).setLength(14);
+camera.position.set(0.5, 0.5, 1).setLength(14);
 let renderer = new THREE.WebGLRenderer({
+  physicallyCorrectLights: true,
   antialias: true
 });
 renderer.setSize(innerWidth, innerHeight);
@@ -27,75 +28,84 @@ controls.minDistance = 6;
 controls.maxDistance = 15;
 controls.enableDamping = true;
 controls.autoRotate = true;
-controls.autoRotateSpeed *= 0.95;
+controls.autoRotateSpeed = 0.0;
 
 let globalUniforms = {
   time: { value: 0 }
 };
 
 let rad = 5;
-const initialShellOpacity = 1.9; // Initial shell opacity
 const shellGeometry = new THREE.SphereBufferGeometry(rad + 0.2, 64, 64);
 const textureLoader1 = new THREE.TextureLoader();
-const texture3D1 = textureLoader1.load(imgData7); 
-const shellMaterial = new THREE.MeshPhongMaterial({
-  color: 0xffffff,
-  opacity: 1,
+const texture3D1 = textureLoader1.load('./map2.jpeg'); 
+const shellMaterial = new THREE.MeshBasicMaterial({
   map: texture3D1,
-  transparent: true,
-  shininess: 0.0,
+  transparent: false,
 })
-
 const shell = new THREE.Mesh(shellGeometry, shellMaterial);
 scene.add(shell);
 
-// Create ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.03);
-scene.add(ambientLight);
 
-// Create a hemisphere light
-// const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.0001);
-// scene.add(hemisphereLight);
+const sphereRadius = rad + 0.2; // Radius of the shell sphere
+const numInstances = 1000000;
 
-// Example of adding directional lights to the scene
-const directionalLights = [];
+const test1 = new THREE.PlaneGeometry(0.045, 0.045);
+const test2 = new THREE.MeshBasicMaterial({
+  color: 0x000000,
+  transparent: true,
+  opacity: 0.8,
+  // blending: THREE.NormalBlending,
+  side: THREE.DoubleSide,
+});
 
-// Add directional lights from different angles
-const light1 = new THREE.DirectionalLight(0xffffff, 0.1);
-light1.position.set(0, 0, 10); // Adjust the light direction
-directionalLights.push(light1);
+const test3 = new THREE.InstancedMesh(test1, test2, numInstances);
+scene.add(test3);
 
-const light2 = new THREE.DirectionalLight(0xffffff, 0.1);
-light2.position.set(10, 0, 0); // Adjust the light direction
-directionalLights.push(light2);
 
-const light3 = new THREE.DirectionalLight(0xffffff, 0.1);
-light3.position.set(0, 10, 0); // Adjust the light direction
-directionalLights.push(light3);
+const instancedMatrix = new THREE.Matrix4();
+const distributionPoints = customBrickWallDistribution(numInstances);
 
-const light4 = new THREE.DirectionalLight(0xffffff, 0.1);
-light4.position.set(-10, 0, 0); // Adjust the light direction
-directionalLights.push(light4);
+function customBrickWallDistribution(samples) {
+  const points = [];
+  const rows = Math.ceil(Math.sqrt(samples)); // Number of rows in the "brick wall"
+  const cols = Math.ceil(samples / rows); // Number of columns in the "brick wall"
 
-const light5 = new THREE.DirectionalLight(0xffffff, 0.1);
-light5.position.set(0, -10, 0); // Adjust the light direction
-directionalLights.push(light5);
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      const u = (j / (cols - 1)) * 2 * Math.PI; // parametric variable u
+      const v = (i / (rows - 1)) * Math.PI; // parametric variable v
 
-// Add the lights to the scene
-for (const light of directionalLights) {
-  scene.add(light);
+      // Convert spherical coordinates to Cartesian coordinates
+      const x = Math.cos(u) * Math.sin(v) * sphereRadius;
+      const y = Math.sin(u) * Math.sin(v) * sphereRadius;
+      const z = Math.cos(v) * sphereRadius;
+
+      points.push(new THREE.Vector3(x, y, z));
+    }
+  }
+
+  return points;
 }
+
+for (let i = 0; i < numInstances; i++) {
+  const position = distributionPoints[i];
+  instancedMatrix.makeTranslation(position.x, position.y, position.z);
+  const normal = position.clone().normalize();
+  instancedMatrix.lookAt(new THREE.Vector3(), normal, new THREE.Vector3(0, 1, 0));
+  test3.setMatrixAt(i, instancedMatrix);
+}
+
 
 let galaxyGeometry = new THREE.SphereGeometry(100, 32, 32);
 let galaxyMaterial = new THREE.MeshBasicMaterial({
   side: THREE.BackSide
 });
 let galaxy = new THREE.Mesh(galaxyGeometry, galaxyMaterial);
-const textureLoader = new THREE.TextureLoader();
+const textureLoader2 = new THREE.TextureLoader();
 // Load Galaxy Textures
-textureLoader.crossOrigin = true;
-textureLoader.load(
-  'https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/starfield.png',
+textureLoader2.crossOrigin = true;
+textureLoader2.load(
+  './Background.jpg',
   function(texture) {
     galaxyMaterial.map = texture;
     scene.add(galaxy);
@@ -113,50 +123,7 @@ let closeBtn = document.getElementById("closeButton");
 closeBtn.addEventListener("pointerdown", event => {
   labelDiv.classList.add("hidden");
 })
-
-addRandomSpotlights(140, Math.PI / 15);
-
-function addSpotLight(x,y,z){
-  const spotLight = new THREE.SpotLight( 0xffffff );
-  spotLight.position.set( x,y,z );
-  spotLight.castShadow = false;
-  spotLight.intensity = 1;
-  spotLight.angle = Math.PI / 15;
-  spotLight.penumbra = 0.06; 
-   spotLight.distance = 10;
-  const helper = new THREE.SpotLightHelper(spotLight);
-  // scene.add(helper);
-  
-  scene.add( spotLight );
-  
-}
-
-function addRandomSpotlights(numSpotlights) {
-  const minRadius = 0.5; // Minimum radius
-  const maxRadius = 0.5; // Maximum radius
-  const minSize = 0.2; // Minimum spotlight size
-  const maxSize = 0.2; // Maximum spotlight size
-
-  for (let i = 0; i < numSpotlights; i++) {
-    // Generate random positions outside the globe's surface
-    const radius = Math.random() * (maxRadius - minRadius) + minRadius;
-    const size = Math.random() * (maxSize - minSize) + minSize;
-    const theta = Math.random() * Math.PI * 2; // Random angle
-    const phi = Math.random() * Math.PI; // Random elevation angle
-
-    // Calculate the spotlight positions outside the globe
-    const globeRadius = 5; // Globe radius
-    const x = (globeRadius + radius) * Math.sin(phi) * Math.cos(theta);
-    const y = (globeRadius + radius) * Math.sin(phi) * Math.sin(theta);
-    const z = (globeRadius + radius) * Math.cos(phi);
-
-    addSpotLight(x, y, z, size);
-  }
-}
-
 let clock = new THREE.Clock();
-
-
 renderer.setAnimationLoop(() => {
   let t = clock.getElapsedTime();
   globalUniforms.time.value = t;
@@ -165,7 +132,6 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);
 });
-
 console.log("errors")
 function onWindowResize() {
   camera.aspect = innerWidth / innerHeight;
