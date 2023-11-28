@@ -47,13 +47,13 @@ scene.add(shell);
 
 
 const sphereRadius = rad + 0.2; // Radius of the shell sphere
-const numInstances = 1000000;
+const numInstances = 500000;
 
 const test1 = new THREE.PlaneGeometry(0.045, 0.045);
 const test2 = new THREE.MeshBasicMaterial({
   color: 0x000000,
   transparent: true,
-  opacity: 0.8,
+  opacity: 0.6,
   // blending: THREE.NormalBlending,
   side: THREE.DoubleSide,
 });
